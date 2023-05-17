@@ -1,7 +1,7 @@
 package lk.sadeep.itt.retail;
 
-import lk.sadeep.iit.retail.core.Customer;
-import lk.sadeep.iit.retail.core.Item;
+import lk.sadeep.itt.retail.core.Customer;
+import lk.sadeep.itt.retail.core.Item;
 
 import java.io.IOException;
 import java.math.BigDecimal;
