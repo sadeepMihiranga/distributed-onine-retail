@@ -1,10 +1,10 @@
-package lk.sadeep.itt.test;
+package lk.sadeep.itt;
 
 import java.awt.*;
 import java.io.Console;
 import java.io.IOException;
 
-public class CommandRunner {
+public class NodeStarter {
 
     public static void main(String[] args) throws InterruptedException, IOException {
 
@@ -44,7 +44,7 @@ public class CommandRunner {
             builder.start();
 
         } else {
-            CommandRunner.main(new String[0]);
+            NodeStarter.main(new String[0]);
             System.out.println("Program has ended, please type 'exit' to close the console");
         }
     }

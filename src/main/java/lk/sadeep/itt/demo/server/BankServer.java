@@ -1,7 +1,4 @@
-package lk.sadeep.itt.test.server;
-
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
+package lk.sadeep.itt.demo.server;
 
 public class BankServer {
 

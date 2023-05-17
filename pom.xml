@@ -77,7 +77,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>lk.sadeep.itt.MainHandler</mainClass>
+                            <mainClass>lk.sadeep.itt.ProjectEntryPointHandler</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -109,7 +109,7 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>lk.sadeep.itt.MainHandler</mainClass>
+                                    <mainClass>lk.sadeep.itt.ProjectEntryPointHandler</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

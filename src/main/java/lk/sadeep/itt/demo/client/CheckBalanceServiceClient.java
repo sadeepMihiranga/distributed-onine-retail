@@ -1,4 +1,4 @@
-package lk.sadeep.itt.test.client;
+package lk.sadeep.itt.demo.client;
 
 import ds.tutorial.communication.grpc.generated.BalanceServiceGrpc;
 import ds.tutorial.communication.grpc.generated.CheckBalanceRequest;

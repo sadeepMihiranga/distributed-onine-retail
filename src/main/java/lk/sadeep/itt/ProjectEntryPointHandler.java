@@ -2,12 +2,12 @@ package lk.sadeep.itt;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import lk.sadeep.itt.test.client.CheckBalanceServiceClient;
-import lk.sadeep.itt.test.server.BalanceServiceImpl;
+import lk.sadeep.itt.demo.client.CheckBalanceServiceClient;
+import lk.sadeep.itt.demo.server.BalanceServiceImpl;
 
 import java.io.IOException;
 
-public class MainHandler {
+public class ProjectEntryPointHandler {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
