@@ -1,7 +1,7 @@
 syntax = "proto3";
 option java_multiple_files = true;
 
-package ds.tutorial.communication.grpc.generated;
+package lk.sadeep.iit.retail.communication.grpc.generated;
 
 message CheckBalanceRequest {
   string accountId = 1;
@@ -12,6 +12,5 @@ message CheckBalanceResponse {
 }
 
 service BalanceService {
-  rpc checkBalance(CheckBalanceRequest) returns
-      (CheckBalanceResponse);
+  rpc checkBalance(CheckBalanceRequest) returns (CheckBalanceResponse);
 }

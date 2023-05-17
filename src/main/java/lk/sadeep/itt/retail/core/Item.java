@@ -1,5 +1,8 @@
 package lk.sadeep.itt.retail.core;
 
+import lk.sadeep.itt.retail.communication.OtherNodesLocationStore;
+import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
+import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
 import lk.sadeep.itt.retail.core.constants.UserType;
 
 import java.io.BufferedReader;
@@ -448,6 +451,7 @@ public class Item {
     public synchronized static boolean checkoutUpdateStock(Map<Long, Integer> requestedQtys, Long customerId) throws IOException {
 
         boolean isItemsAvailable = true;
+        List<UpdateStockCheckoutRequestDTO> updateStockCheckoutRequestDTOList = new ArrayList<>();
 
         for (Map.Entry<Long, Integer> itemEntry : requestedQtys.entrySet()) {
 
@@ -464,11 +468,25 @@ public class Item {
                 break;
             }
 
+            /** update the quantity */
             itemOptional.get().setQuantity(itemOptional.get().getQuantity() - requestedQty);
 
             itemStore.remove(itemOptional.get());
             itemStore.add(itemOptional.get());
+
+            updateStockCheckoutRequestDTOList.add(new UpdateStockCheckoutRequestDTO(itemOptional.get().getItemId(),
+                    itemOptional.get().getQuantity().intValue()));
         }
+
+        // TODO : call GRPC call to other nodes to sync data
+        OtherNodesLocationStore.showNodeLocations();
+        OtherNodesLocationStore.getActiveNodeLocations().forEach(otherNodesLocationStore -> {
+
+            System.out.println("\nSending sync request to > " + otherNodesLocationStore.getHost() + ":" + otherNodesLocationStore.getPort());
+
+            new OnlineRentalServiceClient(otherNodesLocationStore.getHost(), otherNodesLocationStore.getPort())
+                .processUserRequests(customerId, updateStockCheckoutRequestDTOList);
+        });
 
         if(!isItemsAvailable) {
             new Cart().viewCart(customerId);

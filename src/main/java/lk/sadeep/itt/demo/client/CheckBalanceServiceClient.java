@@ -1,10 +1,10 @@
 package lk.sadeep.itt.demo.client;
 
-import ds.tutorial.communication.grpc.generated.BalanceServiceGrpc;
-import ds.tutorial.communication.grpc.generated.CheckBalanceRequest;
-import ds.tutorial.communication.grpc.generated.CheckBalanceResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lk.sadeep.iit.retail.communication.grpc.generated.BalanceServiceGrpc;
+import lk.sadeep.iit.retail.communication.grpc.generated.CheckBalanceRequest;
+import lk.sadeep.iit.retail.communication.grpc.generated.CheckBalanceResponse;
 
 import java.util.Scanner;
 

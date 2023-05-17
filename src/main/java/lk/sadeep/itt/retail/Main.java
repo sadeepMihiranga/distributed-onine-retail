@@ -8,26 +8,14 @@ import java.math.BigDecimal;
 
 public class Main {
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
 
-        /** insert some item when starting the application */
+        // insert some item when starting the application
         insertItems();
 
         try {
             new MainMenu().showMainMenu();
         } catch (IOException ex) {}
-
-        /*Thread mainMenuThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    new lk.sadeep.iit.retail.core.MainMenu().showMainMenu();
-                } catch (IOException ex) {}
-            }
-        });
-
-        mainMenuThread.start();
-        mainMenuThread.join();*/
     }
 
     private static void insertItems() {
@@ -38,5 +26,5 @@ public class Main {
 
         Item.addNewItem(item1);
         Item.addNewItem(item2);
-    }
+    }*/
 }
