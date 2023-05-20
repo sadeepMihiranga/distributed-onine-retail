@@ -9,6 +9,12 @@ import java.util.Random;
 
 public class BalanceServiceImpl extends BalanceServiceGrpc.BalanceServiceImplBase {
 
+    private BankServer server;
+
+    public BalanceServiceImpl(BankServer server){
+        this.server = server;
+    }
+
     @Override
     public void checkBalance(CheckBalanceRequest request, StreamObserver<CheckBalanceResponse> responseObserver) {
 
@@ -18,8 +24,7 @@ public class BalanceServiceImpl extends BalanceServiceGrpc.BalanceServiceImplBas
         CheckBalanceResponse response = CheckBalanceResponse.newBuilder()
                 .setBalance(balance)
                 .build();
-        System.out.println("Responding, balance for account " + accountId + " is " +
-                balance);
+        System.out.println("Responding, balance for account " + accountId + " is " + balance);
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

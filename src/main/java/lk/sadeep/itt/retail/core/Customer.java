@@ -141,7 +141,7 @@ public class Customer {
         Map<Long, Integer> requestedQtys = new HashMap<>();
         requestedQtys.put(itemId, requestedQty);
 
-        Item.checkoutUpdateStock(requestedQtys, customerId);
+        Item.checkoutUpdateStock(requestedQtys, customerId, false);
 
         System.out.println("\nCustomer " +customerId+ ", Checkout succeeded.");
     }

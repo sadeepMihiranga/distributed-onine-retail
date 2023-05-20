@@ -15,7 +15,7 @@ public class CheckBalanceServiceClient {
     String host = null;
     int port = -1;
 
-    /*public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
         String host = null;
         int port = -1;
         if (args.length != 2) {
@@ -24,12 +24,11 @@ public class CheckBalanceServiceClient {
         }
         host = args[0];
         port = Integer.parseInt(args[1].trim());
-        CheckBalanceServiceClient client = new CheckBalanceServiceClient(host,
-                port);
+        CheckBalanceServiceClient client = new CheckBalanceServiceClient(host, port);
         client.initializeConnection();
         client.processUserRequests();
         client.closeConnection();
-    }*/
+    }
 
     public CheckBalanceServiceClient (String host, int port) {
         this.host = host;

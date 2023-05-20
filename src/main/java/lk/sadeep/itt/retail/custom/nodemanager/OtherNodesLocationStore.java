@@ -1,4 +1,4 @@
-package lk.sadeep.itt.retail.communication;
+package lk.sadeep.itt.retail.custom.nodemanager;
 
 import java.util.ArrayList;
 import java.util.List;

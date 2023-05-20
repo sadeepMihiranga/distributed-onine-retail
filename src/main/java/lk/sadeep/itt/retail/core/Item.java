@@ -1,14 +1,21 @@
 package lk.sadeep.itt.retail.core;
 
-import lk.sadeep.itt.retail.communication.OtherNodesLocationStore;
+import com.google.gson.Gson;
+import lk.sadeep.iit.NameServiceClient;
+import lk.sadeep.itt.retail.custom.nodemanager.NodeInfo;
+import lk.sadeep.itt.retail.custom.nodemanager.OtherNodesLocationStore;
 import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
 import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
 import lk.sadeep.itt.retail.core.constants.UserType;
+import lk.sadeep.itt.retail.custom.nodemanager.ProjectEntryPointHandler;
+import lk.sadeep.itt.retail.synchronization.DistributedLock;
+import org.apache.zookeeper.KeeperException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,6 +34,8 @@ public class Item {
     private Long loggedCustomerId;
 
     private static List<Item> itemStore = new ArrayList<>();
+
+    public static final String NAME_SERVICE_ADDRESS = "http://localhost:2379";
 
     public Item() {
     }
@@ -448,10 +457,36 @@ public class Item {
         return itemOptional.get();
     }
 
-    public synchronized static boolean checkoutUpdateStock(Map<Long, Integer> requestedQtys, Long customerId) throws IOException {
+    public static String buildServerData(String IP, int port) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(IP).append(":").append(port);
+        return builder.toString();
+    }
+
+
+    /** this method shared across the distributed system */
+    public synchronized static boolean checkoutUpdateStock(Map<Long, Integer> requestedQtys, Long customerId, boolean syncToOthers) throws IOException {
 
         boolean isItemsAvailable = true;
         List<UpdateStockCheckoutRequestDTO> updateStockCheckoutRequestDTOList = new ArrayList<>();
+
+        final String lockName = "items_stock_lock";
+
+        DistributedLock lock = null;
+
+        if(syncToOthers) {
+            System.out.println("\nTrying distributed lock on to '"+lockName+"'");
+
+            try {
+                lock = new DistributedLock(lockName);
+                lock.acquireLock();
+            } catch (KeeperException | InterruptedException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("\nI Got the '"+lockName+"' lock at " + getCurrentTimeStamp());
+        }
 
         for (Map.Entry<Long, Integer> itemEntry : requestedQtys.entrySet()) {
 
@@ -474,25 +509,80 @@ public class Item {
             itemStore.remove(itemOptional.get());
             itemStore.add(itemOptional.get());
 
-            updateStockCheckoutRequestDTOList.add(new UpdateStockCheckoutRequestDTO(itemOptional.get().getItemId(),
-                    itemOptional.get().getQuantity().intValue()));
+            updateStockCheckoutRequestDTOList.add(new UpdateStockCheckoutRequestDTO(itemOptional.get().getItemId(), requestedQty));
         }
 
         // TODO : call GRPC call to other nodes to sync data
-        OtherNodesLocationStore.showNodeLocations();
-        OtherNodesLocationStore.getActiveNodeLocations().forEach(otherNodesLocationStore -> {
+        if(syncToOthers) {
+            try {
 
-            System.out.println("\nSending sync request to > " + otherNodesLocationStore.getHost() + ":" + otherNodesLocationStore.getPort());
+                NameServiceClient client = new NameServiceClient(NAME_SERVICE_ADDRESS);
 
-            new OnlineRentalServiceClient(otherNodesLocationStore.getHost(), otherNodesLocationStore.getPort())
-                .processUserRequests(customerId, updateStockCheckoutRequestDTOList);
-        });
+                List<NodeInfo> allNodeLocations = getAllNodeLocations();
+
+                for(NodeInfo nodeInfo : allNodeLocations) {
+                    //NameServiceClient.ServiceDetails serviceDetails = client.findService("OnlineRetailService_11438");
+                    NameServiceClient.ServiceDetails serviceDetails = client.findService("OnlineRetailService_" + nodeInfo.getPort());
+
+                    /** accessing shared resource */
+                    /*System.out.println("\nSending item sync request to : " + serviceDetails.getIPAddress() + ":" + serviceDetails.getPort());
+                    new OnlineRentalServiceClient(serviceDetails.getIPAddress(), serviceDetails.getPort())
+                            .processUserRequests(customerId, updateStockCheckoutRequestDTOList);*/
+
+                    int port = ProjectEntryPointHandler.getPort();
+
+                    if(port != Integer.valueOf(nodeInfo.getPort())) { /** sending syncing GRPC call for all other active nodes */
+                        System.out.println("\nSending item sync request to : " + nodeInfo.getIp() + ":" + nodeInfo.getPort());
+                        new OnlineRentalServiceClient(nodeInfo.getIp(), Integer.valueOf(nodeInfo.getPort()))
+                                .processUserRequests(customerId, updateStockCheckoutRequestDTOList);
+                    }
+                }
+
+            } catch (IOException | InterruptedException e) {
+                System.out.println("Error while invoking GRPC call :" + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        if(syncToOthers) {
+            try {
+                lock.releaseLock();
+            } catch (KeeperException | InterruptedException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("\nReleasing the '"+lockName+"' lock " + getCurrentTimeStamp());
+        }
 
         if(!isItemsAvailable) {
             new Cart().viewCart(customerId);
         }
 
         return isItemsAvailable;
+    }
+
+    private static List<NodeInfo> getAllNodeLocations() throws IOException {
+
+        Process proc =  Runtime.getRuntime().exec("etcdctl get --prefix OnlineRetailService_");
+        BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+
+        List<NodeInfo> allNodeInfo = new ArrayList<>();
+        Gson gson = new Gson();
+
+        // Read the output from the command
+        String s;
+        while ((s = stdInput.readLine()) != null) {
+            if(s.startsWith("{") && s.endsWith("}")) {
+                allNodeInfo.add(gson.fromJson(s, NodeInfo.class));
+            }
+        }
+
+        return allNodeInfo;
+    }
+
+    private static String getCurrentTimeStamp() {
+        return new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis()));
     }
 
     public static Optional<Item> findItemById(Long itemId) {

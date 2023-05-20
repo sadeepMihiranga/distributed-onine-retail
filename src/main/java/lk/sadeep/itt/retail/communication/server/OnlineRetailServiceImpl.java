@@ -1,20 +1,22 @@
 package lk.sadeep.itt.retail.communication.server;
 
 import io.grpc.stub.StreamObserver;
-import lk.sadeep.iit.retail.communication.grpc.generated.CheckBalanceResponse;
-import lk.sadeep.iit.retail.communication.grpc.generated.OnlineRetailServiceGrpc;
-import lk.sadeep.iit.retail.communication.grpc.generated.UpdateStockCheckoutRequest;
-import lk.sadeep.iit.retail.communication.grpc.generated.UpdateStockCheckoutResponse;
+import lk.sadeep.iit.retail.communication.grpc.generated.*;
+import lk.sadeep.itt.retail.core.Item;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetailServiceImplBase {
 
     @Override
     public void updateStockCheckout(UpdateStockCheckoutRequest request, StreamObserver<UpdateStockCheckoutResponse> responseObserver) {
 
-        Long customerId = request.getCustomerId();
-        System.out.println("Request received..");
+        System.out.println("\nItem stock update request received.");
 
-        System.out.println("Customer id : " + customerId);
+        syncItemStock(request.getCustomerId(), request.getUpdateStockCheckoutItemsList());
 
         UpdateStockCheckoutResponse updateStockCheckoutResponse = UpdateStockCheckoutResponse.newBuilder()
                 .setIsUpdated(true)
@@ -23,5 +25,25 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
 
         responseObserver.onNext(updateStockCheckoutResponse);
         responseObserver.onCompleted();
+    }
+
+    private void syncItemStock(Long customerId, List<UpdateStockCheckoutItems> updateStockCheckoutItemsList) {
+
+        System.out.println("\nSyncing item stock...");
+
+        Map<Long, Integer> requestedQtys = new HashMap<>();
+
+        for(UpdateStockCheckoutItems item : updateStockCheckoutItemsList) {
+            requestedQtys.put(item.getItemId(), item.getRequestedQty());
+        }
+
+        // TODO : update the item sock
+        try {
+            boolean isItemsAvailable = Item.checkoutUpdateStock(requestedQtys, customerId, false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("\nItem stock synced successfully.");
     }
 }

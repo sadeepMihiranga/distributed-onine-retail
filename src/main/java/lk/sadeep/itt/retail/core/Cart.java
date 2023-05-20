@@ -167,7 +167,7 @@ public class Cart {
             }
 
             // update the stock
-            boolean isItemsAvailable = Item.checkoutUpdateStock(requestedQtys, cart.getCustomerId());
+            boolean isItemsAvailable = Item.checkoutUpdateStock(requestedQtys, cart.getCustomerId(), true);
 
             if(!isItemsAvailable) {
                 System.out.println("\nThank you for your purchase.");

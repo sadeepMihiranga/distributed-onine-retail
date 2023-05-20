@@ -24,7 +24,7 @@ public class OnlineRentalServiceClient {
     }
 
     private void initializeConnection () {
-        System.out.println("Initializing Connecting to server at " + host + ":" + port);
+        System.out.println("\nInitializing Connecting to server at " + host + ":" + port);
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
@@ -62,7 +62,7 @@ public class OnlineRentalServiceClient {
                 .withWaitForReady()
                 .updateStockCheckout(updateStockCheckoutRequest);
 
-        System.out.println("Is Updated : " + updateStockCheckoutResponse.getIsUpdated());
+        System.out.println("\nIs item stock Updated : " + updateStockCheckoutResponse.getIsUpdated());
 
 
         closeConnection();
