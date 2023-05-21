@@ -1,6 +1,5 @@
 package lk.sadeep.itt.retail;
 
-import com.google.gson.Gson;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lk.sadeep.iit.NameServiceClient;
@@ -10,13 +9,8 @@ import lk.sadeep.itt.retail.core.MainMenu;
 import lk.sadeep.itt.retail.custom.nodemanager.ActiveNodeKeeper;
 import lk.sadeep.itt.retail.synchronization.DistributedLock;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class ProjectEntryPointHandler {
 
@@ -36,19 +30,21 @@ public class ProjectEntryPointHandler {
         /** read host and port from input params  */
         validateCmd(args);
 
+        DistributedLock.setZooKeeperURL(ZOOKEEPER_URL);
+
+        /** start node status check (will check node availability for the given frequency) */
         if(isAnc) {
-            ActiveNodeKeeper.startNodeChecker();
+            ActiveNodeKeeper.startNodeChecker(2000l);
             return;
         }
 
+        /** start the GRPC server */
         Server server = ServerBuilder
                 .forPort(port)
                 .addService(new OnlineRetailServiceImpl())
                 .build();
         server.start();
         System.out.println("\nActive node started and ready to accept requests on port " + port);
-
-        DistributedLock.setZooKeeperURL(ZOOKEEPER_URL);
 
         /** register node location in the name service */
         registerNameService(port, host);

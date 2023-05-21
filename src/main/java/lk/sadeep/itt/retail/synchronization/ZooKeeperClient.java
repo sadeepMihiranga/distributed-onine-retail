@@ -21,18 +21,6 @@ public class ZooKeeperClient {
         return zooKeeper.create(path, "".getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, mode);
     }
 
-    // Consistency related
-    public String createNode(String path, boolean shouldWatch, CreateMode mode, byte[] data) throws KeeperException, InterruptedException {
-        return zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, mode);
-    }
-
-    // Consistency related
-    /**  fetch the stored data */
-    public byte[] getData(String path, boolean shouldWatch) throws KeeperException, InterruptedException {
-        return zooKeeper.getData(path, shouldWatch, null);
-    }
-
-
     public boolean CheckExists(String path) throws KeeperException, InterruptedException {
         Stat nodeStat = zooKeeper.exists(path, false);
         return (nodeStat != null);

@@ -9,7 +9,8 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class ActiveNodeKeeper {
-    public static void startNodeChecker() throws IOException {
+
+    public static void startNodeChecker(Long statusCheckFreq) {
 
         System.out.println("ActiveNodeKeeper is doing it's job");
 
@@ -31,21 +32,18 @@ public class ActiveNodeKeeper {
 
                         System.out.println("Node in the " + nodeInfo.getPort() + " is inactive");
 
-                        Process proc = null;
                         try {
-                            proc = Runtime.getRuntime().exec("etcdctl del OnlineRetailService_" + nodeInfo.getPort());
+                            Runtime.getRuntime().exec("etcdctl del OnlineRetailService_" + nodeInfo.getPort());
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
-                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
                     }
                 }
             }
         };
 
         long delay = 0L;
-        new Timer().schedule(task, delay, 2000);
+        new Timer().schedule(task, delay, statusCheckFreq);
     }
 
     private static List<NodeInfo> getAllNodeLocations() throws IOException {
