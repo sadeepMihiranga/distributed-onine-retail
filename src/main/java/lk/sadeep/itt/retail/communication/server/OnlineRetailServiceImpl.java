@@ -46,4 +46,15 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
 
         System.out.println("\nItem stock synced successfully.");
     }
+
+    @Override
+    public void checkNodeHealth(CheckNodeHealthRequest request, StreamObserver<CheckNodeHealthResponse> responseObserver) {
+
+        CheckNodeHealthResponse response = CheckNodeHealthResponse.newBuilder()
+                .setResponseMessage("ACTIVE")
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 }

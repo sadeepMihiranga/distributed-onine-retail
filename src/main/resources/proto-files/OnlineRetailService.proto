@@ -18,6 +18,15 @@ message UpdateStockCheckoutResponse {
   string responseMessage = 2;
 }
 
+message CheckNodeHealthRequest {
+  string request = 1;
+}
+
+message CheckNodeHealthResponse {
+  string responseMessage = 1;
+}
+
 service OnlineRetailService {
   rpc updateStockCheckout(UpdateStockCheckoutRequest) returns (UpdateStockCheckoutResponse);
+  rpc checkNodeHealth(CheckNodeHealthRequest) returns (CheckNodeHealthResponse);
 }

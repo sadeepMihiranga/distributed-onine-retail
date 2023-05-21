@@ -13,8 +13,19 @@ public class NodeStarter {
     public static void main(String[] args) throws InterruptedException, IOException {
 
         // TODO : make sure pom.xml main class pointed to ProjectEntryPointHandler when building the jar
-        startNodes(3);
+        startNodes(2);
+
+        startActiveNodeKeeper();
+
         System.exit(0);
+    }
+
+    public static void startActiveNodeKeeper() throws IOException, InterruptedException {
+
+        final String jarLocation = "C:\\Users\\sadde\\IdeaProjects\\distributed-onine-retail\\target";
+        final String jarRunCmd = "java -jar distributed-onine-retail-1.0-SNAPSHOT-shaded.jar anc";
+
+        runCmd(jarLocation, jarRunCmd);
     }
 
     public static void startNodes(int noOfNodes) throws IOException, InterruptedException {

@@ -29,6 +29,11 @@ public class Cart {
 
         Optional<Cart> optionalCart = null;
 
+        if(activeCartList.isEmpty()) {
+            System.out.println("\nCart is empty");
+            return;
+        }
+
         optionalCart = activeCartList.stream()
                 .filter(cart -> cart.getCustomerId().equals(customerId))
                 .findFirst();

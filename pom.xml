@@ -111,7 +111,7 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>lk.sadeep.itt.retail.custom.nodemanager.ProjectEntryPointHandler</mainClass>
+                                    <mainClass>lk.sadeep.itt.retail.ProjectEntryPointHandler</mainClass>
 <!--                                    <mainClass>lk.sadeep.itt.retail.synchronization.DummyProcess</mainClass>-->
 <!--                                    <mainClass>lk.sadeep.itt.demo.server.BankServer</mainClass>-->
                                 </transformer>

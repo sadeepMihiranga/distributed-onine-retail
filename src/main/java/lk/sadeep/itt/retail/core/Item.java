@@ -3,11 +3,10 @@ package lk.sadeep.itt.retail.core;
 import com.google.gson.Gson;
 import lk.sadeep.iit.NameServiceClient;
 import lk.sadeep.itt.retail.custom.nodemanager.NodeInfo;
-import lk.sadeep.itt.retail.custom.nodemanager.OtherNodesLocationStore;
 import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
 import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
 import lk.sadeep.itt.retail.core.constants.UserType;
-import lk.sadeep.itt.retail.custom.nodemanager.ProjectEntryPointHandler;
+import lk.sadeep.itt.retail.ProjectEntryPointHandler;
 import lk.sadeep.itt.retail.synchronization.DistributedLock;
 import org.apache.zookeeper.KeeperException;
 

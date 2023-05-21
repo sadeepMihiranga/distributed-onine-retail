@@ -1,14 +1,18 @@
-package lk.sadeep.itt.retail.custom.nodemanager;
+package lk.sadeep.itt.retail;
 
+import com.google.gson.Gson;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lk.sadeep.iit.NameServiceClient;
 import lk.sadeep.itt.retail.communication.server.OnlineRetailServiceImpl;
 import lk.sadeep.itt.retail.core.Item;
 import lk.sadeep.itt.retail.core.MainMenu;
+import lk.sadeep.itt.retail.custom.nodemanager.ActiveNodeKeeper;
 import lk.sadeep.itt.retail.synchronization.DistributedLock;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +21,7 @@ import java.util.List;
 public class ProjectEntryPointHandler {
 
 
+    private static boolean isAnc = false;
     private static String host;
     private static int port;
     private static final String NAME_SERVICE_ADDRESS = "http://localhost:2379";
@@ -30,6 +35,11 @@ public class ProjectEntryPointHandler {
 
         /** read host and port from input params  */
         validateCmd(args);
+
+        if(isAnc) {
+            ActiveNodeKeeper.startNodeChecker();
+            return;
+        }
 
         Server server = ServerBuilder
                 .forPort(port)
@@ -60,16 +70,26 @@ public class ProjectEntryPointHandler {
     }
 
     private static void validateCmd(String[] args) {
-        if (args.length != 2) {
-            System.out.println("Param needs <host> <port>");
-            System.exit(1);
+
+        if(args[0].equals("anc")) {
+            if (args.length != 1) {
+                System.exit(1);
+            }
+
+            isAnc = true;
+
+        } else {
+            if (args.length != 2) {
+                System.out.println("Param needs <host> <port>");
+                System.exit(1);
+            }
+
+            host = args[0];
+
+            String stringPort = args[1];
+
+            port = Integer.valueOf(stringPort);
         }
-
-        host = args[0];
-
-        String stringPort = args[1];
-
-        port = Integer.valueOf(stringPort);
     }
 
     private static void insertItems() {

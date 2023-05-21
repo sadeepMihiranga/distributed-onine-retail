@@ -67,4 +67,31 @@ public class OnlineRentalServiceClient {
 
         closeConnection();
     }
+
+    public String checkNodeHealth() {
+
+        initializeConnection();
+
+        CheckNodeHealthRequest request = CheckNodeHealthRequest
+                .newBuilder()
+                .setRequest("IS_ACTIVE")
+                .build();
+
+        CheckNodeHealthResponse response = null;
+
+        try {
+
+            response = onlineRetailServiceClientStub
+                    .withDeadline(Deadline.after(1, TimeUnit.SECONDS))
+                    .withWaitForReady()
+                    .checkNodeHealth(request);
+
+            closeConnection();
+
+        } catch (Exception e) {
+            return "INACTIVE";
+        }
+
+        return response.getResponseMessage();
+    }
 }
