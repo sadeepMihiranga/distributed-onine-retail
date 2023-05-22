@@ -34,7 +34,7 @@ public class OnlineRentalServiceClient {
         channel.shutdown();
     }
 
-    public void processUserRequests(Long customerId, List<UpdateStockCheckoutRequestDTO> updateStockCheckoutRequestDTOList) {
+    public void updateInventoryCheckout(Long customerId, List<UpdateStockCheckoutRequestDTO> updateStockCheckoutRequestDTOList) {
 
         initializeConnection();
 
@@ -62,7 +62,6 @@ public class OnlineRentalServiceClient {
                 .updateStockCheckout(updateStockCheckoutRequest);
 
         System.out.println("\nIs item stock Updated : " + updateStockCheckoutResponse.getIsUpdated());
-
 
         closeConnection();
     }

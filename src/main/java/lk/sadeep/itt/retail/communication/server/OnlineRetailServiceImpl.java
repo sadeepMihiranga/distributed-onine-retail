@@ -12,7 +12,8 @@ import java.util.Map;
 public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetailServiceImplBase {
 
     @Override
-    public void updateStockCheckout(UpdateStockCheckoutRequest request, StreamObserver<UpdateStockCheckoutResponse> responseObserver) {
+    public void updateStockCheckout(UpdateStockCheckoutRequest request,
+                                    StreamObserver<UpdateStockCheckoutResponse> responseObserver) {
 
         System.out.println("\nItem stock update request received.");
 

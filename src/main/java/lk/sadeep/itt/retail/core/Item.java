@@ -2,6 +2,7 @@ package lk.sadeep.itt.retail.core;
 
 import com.google.gson.Gson;
 import lk.sadeep.iit.NameServiceClient;
+import lk.sadeep.itt.retail.Constants;
 import lk.sadeep.itt.retail.custom.nodemanager.NodeInfo;
 import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
 import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
@@ -484,7 +485,7 @@ public class Item {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.out.println("\nI Got the '"+lockName+"' lock at " + getCurrentTimeStamp());
+            System.out.println("\nProcess "+ProjectEntryPointHandler.getPort()+" got the '"+lockName+"' lock at " + getCurrentTimeStamp());
         }
 
         for (Map.Entry<Long, Integer> itemEntry : requestedQtys.entrySet()) {
@@ -514,32 +515,26 @@ public class Item {
         // TODO : call GRPC call to other nodes to sync data
         if(syncToOthers) {
             try {
-
-                NameServiceClient client = new NameServiceClient(NAME_SERVICE_ADDRESS);
-
                 List<NodeInfo> allNodeLocations = getAllNodeLocations();
 
                 for(NodeInfo nodeInfo : allNodeLocations) {
-                    //NameServiceClient.ServiceDetails serviceDetails = client.findService("OnlineRetailService_11438");
-                    NameServiceClient.ServiceDetails serviceDetails = client.findService("OnlineRetailService_" + nodeInfo.getPort());
+                    final int port = ProjectEntryPointHandler.getPort();
 
-                    /** accessing shared resource */
-                    /*System.out.println("\nSending item sync request to : " + serviceDetails.getIPAddress() + ":" + serviceDetails.getPort());
-                    new OnlineRentalServiceClient(serviceDetails.getIPAddress(), serviceDetails.getPort())
-                            .processUserRequests(customerId, updateStockCheckoutRequestDTOList);*/
-
-                    int port = ProjectEntryPointHandler.getPort();
+                    NameServiceClient.ServiceDetails serviceDetails = new NameServiceClient(Constants.NAME_SERVICE_ADDRESS)
+                            .findService(Constants.SERVICE_NAME_BASE + nodeInfo.getPort());
 
                     if(port != Integer.valueOf(nodeInfo.getPort())) { /** sending syncing GRPC call for all other active nodes */
                         System.out.println("\nSending item sync request to : " + nodeInfo.getIp() + ":" + nodeInfo.getPort());
                         new OnlineRentalServiceClient(nodeInfo.getIp(), Integer.valueOf(nodeInfo.getPort()))
-                                .processUserRequests(customerId, updateStockCheckoutRequestDTOList);
+                                .updateInventoryCheckout(customerId, updateStockCheckoutRequestDTOList);
                     }
                 }
 
-            } catch (IOException | InterruptedException e) {
+            } catch (IOException e) {
                 System.out.println("Error while invoking GRPC call :" + e.getMessage());
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
 
@@ -563,7 +558,7 @@ public class Item {
 
     private static List<NodeInfo> getAllNodeLocations() throws IOException {
 
-        Process proc =  Runtime.getRuntime().exec("etcdctl get --prefix OnlineRetailService_");
+        Process proc =  Runtime.getRuntime().exec("etcdctl get --prefix " + Constants.SERVICE_NAME_BASE);
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
         List<NodeInfo> allNodeInfo = new ArrayList<>();
@@ -576,6 +571,9 @@ public class Item {
                 allNodeInfo.add(gson.fromJson(s, NodeInfo.class));
             }
         }
+
+        gson = null;
+        stdInput = null;
 
         return allNodeInfo;
     }

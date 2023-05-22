@@ -18,8 +18,6 @@ public class ProjectEntryPointHandler {
     private static boolean isAnc = false;
     private static String host;
     private static int port;
-    private static final String NAME_SERVICE_ADDRESS = "http://localhost:2379";
-    private static final String ZOOKEEPER_URL = "localhost:2181";
 
     public static int getPort() {
         return port;
@@ -30,7 +28,7 @@ public class ProjectEntryPointHandler {
         /** read host and port from input params  */
         validateCmd(args);
 
-        DistributedLock.setZooKeeperURL(ZOOKEEPER_URL);
+        DistributedLock.setZooKeeperURL(Constants.ZOOKEEPER_URL);
 
         /** start node status check (will check node availability for the given frequency) */
         if(isAnc) {
@@ -61,8 +59,8 @@ public class ProjectEntryPointHandler {
     }
 
     private static void registerNameService(int serverPort, String host) throws IOException {
-        NameServiceClient client = new NameServiceClient(NAME_SERVICE_ADDRESS);
-        client.registerService("OnlineRetailService_"+serverPort, host, serverPort, "tcp");
+        NameServiceClient client = new NameServiceClient(Constants.NAME_SERVICE_ADDRESS);
+        client.registerService(Constants.SERVICE_NAME_BASE + serverPort, host, serverPort, "tcp");
     }
 
     private static void validateCmd(String[] args) {
