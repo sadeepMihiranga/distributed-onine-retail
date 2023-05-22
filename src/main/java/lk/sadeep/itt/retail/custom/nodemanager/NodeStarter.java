@@ -13,7 +13,7 @@ public class NodeStarter {
     public static void main(String[] args) throws InterruptedException, IOException {
 
         // TODO : make sure pom.xml main class pointed to ProjectEntryPointHandler when building the jar
-        startNodes(2);
+        startNodes(3);
 
         startActiveNodeKeeper();
 
