@@ -27,8 +27,15 @@ public class DistributedLock implements Watcher {
         zooKeeperUrl = url;
     }
 
+    private String lockName;
+
+    public String getLockName() {
+        return lockName;
+    }
+
     public DistributedLock(String lockName) throws IOException, KeeperException, InterruptedException {
         this.lockPath = "/" + lockName;
+        this.lockName = lockName;
         client = new ZooKeeperClient(zooKeeperUrl, 5000, this);
         startFlag.await();
         if (client.CheckExists(lockPath) == false) {

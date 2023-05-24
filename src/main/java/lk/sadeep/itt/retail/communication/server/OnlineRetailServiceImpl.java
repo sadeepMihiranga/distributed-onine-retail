@@ -5,6 +5,7 @@ import lk.sadeep.iit.retail.communication.grpc.generated.*;
 import lk.sadeep.itt.retail.core.Item;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,6 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
             requestedQtys.put(item.getItemId(), item.getRequestedQty());
         }
 
-        // TODO : update the item sock
         try {
             boolean isItemsAvailable = Item.checkoutUpdateStock(requestedQtys, customerId, false);
         } catch (IOException e) {
@@ -46,6 +46,25 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
         }
 
         System.out.println("\nItem stock synced successfully.");
+    }
+
+    @Override
+    public void addNewItem(AddNewItemRequest request, StreamObserver<AddNewItemResponse> responseObserver) {
+
+        System.out.println("\nItem insert request received.");
+
+        Item item = new Item(request.getItemId(), request.getCode(), request.getName(), Long.valueOf(request.getCategoryId()).intValue(),
+                request.getDescription(), BigDecimal.valueOf(request.getPrice()), request.getQuantity());
+        Item.addNewItem(item, false);
+
+        System.out.println("\nItem insert synced successfully.");
+
+        AddNewItemResponse addNewItemResponse = AddNewItemResponse.newBuilder()
+                .setResponseMessage("SUCCESS")
+                .build();
+
+        responseObserver.onNext(addNewItemResponse);
+        responseObserver.onCompleted();
     }
 
     @Override

@@ -92,7 +92,7 @@ public class ProjectEntryPointHandler {
         Item item2 = new Item("IT002", "Blue Pen", 2, "Blue Pen",
                 new BigDecimal(20), Long.valueOf(100));
 
-        Item.addNewItem(item1);
-        Item.addNewItem(item2);
+        Item.addNewItem(item1, false);
+        Item.addNewItem(item2, false);
     }
 }

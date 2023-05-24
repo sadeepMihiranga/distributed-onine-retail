@@ -5,6 +5,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lk.sadeep.iit.retail.communication.grpc.generated.*;
 import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
+import lk.sadeep.itt.retail.core.Item;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,13 +58,37 @@ public class OnlineRentalServiceClient {
                 .build();
 
         UpdateStockCheckoutResponse updateStockCheckoutResponse = onlineRetailServiceClientStub
-                .withDeadline(Deadline.after(1, TimeUnit.MINUTES))
+                .withDeadline(Deadline.after(5, TimeUnit.SECONDS))
                 .withWaitForReady()
                 .updateStockCheckout(updateStockCheckoutRequest);
 
+        closeConnection();
+
         System.out.println("\nIs item stock Updated : " + updateStockCheckoutResponse.getIsUpdated());
+    }
+
+    public void addNewItem(Item item) {
+
+        initializeConnection();
+
+        AddNewItemRequest addNewItemRequest = AddNewItemRequest.newBuilder()
+                        .setItemId(item.getItemId())
+                        .setCode(item.getItemCode())
+                        .setCategoryId(item.getItemCategory().getCategoryId())
+                        .setName(item.getItemName())
+                        .setDescription(item.getItemDescription())
+                        .setPrice(item.getItemPrice().doubleValue())
+                        .setQuantity(item.getQuantity().intValue())
+                .build();
+
+        AddNewItemResponse addNewItemResponse = onlineRetailServiceClientStub
+                .withDeadline(Deadline.after(5, TimeUnit.SECONDS))
+                .withWaitForReady()
+                .addNewItem(addNewItemRequest);
 
         closeConnection();
+
+        System.out.println("\nNew item add response  : " + addNewItemResponse.getResponseMessage());
     }
 
     public String checkNodeHealth() {

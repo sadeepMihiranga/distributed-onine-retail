@@ -26,7 +26,22 @@ message CheckNodeHealthResponse {
   string responseMessage = 1;
 }
 
+message AddNewItemRequest {
+  int64 itemId = 1;
+  string code = 2;
+  string name = 3;
+  int64 categoryId = 4;
+  string description = 5;
+  double price = 6;
+  int64 quantity = 7;
+}
+
+message AddNewItemResponse {
+  string responseMessage = 1;
+}
+
 service OnlineRetailService {
   rpc updateStockCheckout(UpdateStockCheckoutRequest) returns (UpdateStockCheckoutResponse);
   rpc checkNodeHealth(CheckNodeHealthRequest) returns (CheckNodeHealthResponse);
+  rpc addNewItem(AddNewItemRequest) returns (AddNewItemResponse);
 }

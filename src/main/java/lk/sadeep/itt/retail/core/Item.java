@@ -9,6 +9,7 @@ import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
 import lk.sadeep.itt.retail.core.constants.UserType;
 import lk.sadeep.itt.retail.ProjectEntryPointHandler;
 import lk.sadeep.itt.retail.synchronization.DistributedLock;
+import lk.sadeep.itt.retail.synchronization.LockName;
 import org.apache.zookeeper.KeeperException;
 
 import java.io.BufferedReader;
@@ -54,6 +55,16 @@ public class Item {
         this.itemCategory = ItemCategory.findById(itemCategory).get();
     }
 
+    public Item(Long itemId, String itemCode, String itemName, int itemCategory, String itemDescription, BigDecimal itemPrice, Long quantity) {
+        this.itemId = itemId;
+        this.itemCode = itemCode;
+        this.itemName = itemName;
+        this.itemDescription = itemDescription;
+        this.itemPrice = itemPrice;
+        this.quantity = quantity;
+        this.itemCategory = ItemCategory.findById(itemCategory).get();
+    }
+
     private static final Object itemStoreLock = new Object();
     private static final Object cartLock = new Object();
 
@@ -87,7 +98,7 @@ public class Item {
                 case 1 : addItemPage(); break;
                 case 2 : removeItemPage(); break;
                 case 3 : searchItemPage(); break;
-                case 4 : System.out.println("View All Items"); break;
+                case 4 : showCategorizedItems(); break;
                 case 5 : new MainMenu().showMainMenu(); break;
                 case 6 : MainMenu.exit(); break;
                 default: System.out.println("Invalid option ! Please try again.");
@@ -330,7 +341,7 @@ public class Item {
         System.out.println("Item Code : " + item.getItemCode());
         System.out.println("Item Name : " + item.getItemName());
         System.out.println("Item Description : " + item.getItemDescription());
-        System.out.println("Item Category : " + item.getItemCategory());
+        System.out.println("Item Category : " + item.getItemCategory().getCategoryName());
 
         if(userType == UserType.ADMIN) {
             System.out.println("Item Quantity : " + item.getQuantity());
@@ -391,9 +402,7 @@ public class Item {
         ItemCategory category = validateCategory(categoryId);
 
         Item item = new Item(code, name, category.getCategoryId(), description, new BigDecimal(price), Long.valueOf(quantity));
-
-        Optional<Item> newItem = addNewItem(item);
-        System.out.println("\nItem added successfully :"+ newItem.get().getItemId() +"\n");
+        addNewItem(item, true);
     }
 
     private ItemCategory validateCategory(String categoryId) throws IOException {
@@ -434,16 +443,64 @@ public class Item {
         }
     }
 
-    public static Optional<Item> addNewItem(Item newItem) {
+    public static void addNewItem(Item newItem, boolean syncToOthers) {
+
+        /** acquire distributed lock on item id */
+        DistributedLock lock = null;
+
+        if(syncToOthers) {
+            lock = DistributedLockHandler.acquireLock(LockName.ITEM_ID_LOCK);
+        }
 
         final Long availableId = getNextAvailableId();
 
+        /** release distributed lock on item id */
+        if(syncToOthers) {
+            DistributedLockHandler.releaseLock(lock);
+        }
+
         synchronized (itemStoreLock) {
 
-            newItem.setItemId(availableId);
+            /** acquire distributed lock on item stock */
+            if(syncToOthers) {
+                lock = DistributedLockHandler.acquireLock(LockName.ITEM_STOCK_LOCK);
+            }
+
+            if(newItem.getItemId() == null) { /** item insert request come from another node */
+                newItem.setItemId(availableId);
+            }
             itemStore.add(newItem);
 
-            return findItemById(availableId);
+            if(syncToOthers) {
+                try {
+                    List<NodeInfo> allNodeLocations = getAllNodeLocations();
+
+                    for(NodeInfo nodeInfo : allNodeLocations) {
+                        final int port = ProjectEntryPointHandler.getPort();
+
+                        NameServiceClient.ServiceDetails serviceDetails = new NameServiceClient(Constants.NAME_SERVICE_ADDRESS)
+                                .findService(Constants.SERVICE_NAME_BASE + nodeInfo.getPort());
+
+                        if(port != Integer.valueOf(nodeInfo.getPort())) { /** sending syncing GRPC call for all other active nodes */
+                            System.out.println("\nSending item sync request to : " + nodeInfo.getIp() + ":" + nodeInfo.getPort());
+                            new OnlineRentalServiceClient(nodeInfo.getIp(), Integer.valueOf(nodeInfo.getPort())).addNewItem(newItem);
+                        }
+                    }
+
+                } catch (IOException e) {
+                    System.out.println("Error while invoking GRPC call :" + e.getMessage());
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            System.out.println("\nItem added successfully :"+ newItem.getItemId() +"\n");
+
+            /** release distributed lock on item stock */
+            if(syncToOthers) {
+                DistributedLockHandler.releaseLock(lock);
+            }
         }
     }
 
@@ -470,22 +527,10 @@ public class Item {
         boolean isItemsAvailable = true;
         List<UpdateStockCheckoutRequestDTO> updateStockCheckoutRequestDTOList = new ArrayList<>();
 
-        final String lockName = "items_stock_lock";
-
+        /** acquire distributed lock on item stock */
         DistributedLock lock = null;
-
         if(syncToOthers) {
-            System.out.println("\nTrying distributed lock on to '"+lockName+"'");
-
-            try {
-                lock = new DistributedLock(lockName);
-                lock.acquireLock();
-            } catch (KeeperException | InterruptedException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.out.println("\nProcess "+ProjectEntryPointHandler.getPort()+" got the '"+lockName+"' lock at " + getCurrentTimeStamp());
+            lock = DistributedLockHandler.acquireLock(LockName.ITEM_STOCK_LOCK);
         }
 
         for (Map.Entry<Long, Integer> itemEntry : requestedQtys.entrySet()) {
@@ -538,15 +583,9 @@ public class Item {
             }
         }
 
+        /** release distributed lock on item stock */
         if(syncToOthers) {
-            try {
-                lock.releaseLock();
-            } catch (KeeperException | InterruptedException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.out.println("\nReleasing the '"+lockName+"' lock " + getCurrentTimeStamp());
+            DistributedLockHandler.releaseLock(lock);
         }
 
         if(!isItemsAvailable) {
