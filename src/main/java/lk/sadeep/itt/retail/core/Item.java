@@ -3,6 +3,7 @@ package lk.sadeep.itt.retail.core;
 import com.google.gson.Gson;
 import lk.sadeep.iit.NameServiceClient;
 import lk.sadeep.itt.retail.Constants;
+import lk.sadeep.itt.retail.custom.nodemanager.ActiveNodeKeeper;
 import lk.sadeep.itt.retail.custom.nodemanager.NodeInfo;
 import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
 import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
@@ -10,7 +11,6 @@ import lk.sadeep.itt.retail.core.constants.UserType;
 import lk.sadeep.itt.retail.ProjectEntryPointHandler;
 import lk.sadeep.itt.retail.synchronization.DistributedLock;
 import lk.sadeep.itt.retail.synchronization.LockName;
-import org.apache.zookeeper.KeeperException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -473,7 +473,7 @@ public class Item {
 
             if(syncToOthers) {
                 try {
-                    List<NodeInfo> allNodeLocations = getAllNodeLocations();
+                    List<NodeInfo> allNodeLocations = ActiveNodeKeeper.getAllNodeLocations();
 
                     for(NodeInfo nodeInfo : allNodeLocations) {
                         final int port = ProjectEntryPointHandler.getPort();
@@ -483,7 +483,7 @@ public class Item {
 
                         if(port != Integer.valueOf(nodeInfo.getPort())) { /** sending syncing GRPC call for all other active nodes */
                             System.out.println("\nSending item sync request to : " + nodeInfo.getIp() + ":" + nodeInfo.getPort());
-                            new OnlineRentalServiceClient(nodeInfo.getIp(), Integer.valueOf(nodeInfo.getPort())).addNewItem(newItem);
+                            new OnlineRentalServiceClient(nodeInfo.getIp(), Integer.valueOf(nodeInfo.getPort())).addNewItemSync(newItem);
                         }
                     }
 
@@ -560,7 +560,7 @@ public class Item {
         // TODO : call GRPC call to other nodes to sync data
         if(syncToOthers) {
             try {
-                List<NodeInfo> allNodeLocations = getAllNodeLocations();
+                List<NodeInfo> allNodeLocations = ActiveNodeKeeper.getAllNodeLocations();
 
                 for(NodeInfo nodeInfo : allNodeLocations) {
                     final int port = ProjectEntryPointHandler.getPort();
@@ -571,7 +571,7 @@ public class Item {
                     if(port != Integer.valueOf(nodeInfo.getPort())) { /** sending syncing GRPC call for all other active nodes */
                         System.out.println("\nSending item sync request to : " + nodeInfo.getIp() + ":" + nodeInfo.getPort());
                         new OnlineRentalServiceClient(nodeInfo.getIp(), Integer.valueOf(nodeInfo.getPort()))
-                                .updateInventoryCheckout(customerId, updateStockCheckoutRequestDTOList);
+                                .updateInventoryCheckoutSync(customerId, updateStockCheckoutRequestDTOList);
                     }
                 }
 
@@ -593,28 +593,6 @@ public class Item {
         }
 
         return isItemsAvailable;
-    }
-
-    private static List<NodeInfo> getAllNodeLocations() throws IOException {
-
-        Process proc =  Runtime.getRuntime().exec("etcdctl get --prefix " + Constants.SERVICE_NAME_BASE);
-        BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-        List<NodeInfo> allNodeInfo = new ArrayList<>();
-        Gson gson = new Gson();
-
-        // Read the output from the command
-        String s;
-        while ((s = stdInput.readLine()) != null) {
-            if(s.startsWith("{") && s.endsWith("}")) {
-                allNodeInfo.add(gson.fromJson(s, NodeInfo.class));
-            }
-        }
-
-        gson = null;
-        stdInput = null;
-
-        return allNodeInfo;
     }
 
     private static String getCurrentTimeStamp() {

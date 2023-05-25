@@ -1,10 +1,19 @@
 package lk.sadeep.itt.retail.core;
 
+import lk.sadeep.iit.NameServiceClient;
+import lk.sadeep.itt.retail.Constants;
+import lk.sadeep.itt.retail.ProjectEntryPointHandler;
+import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
 import lk.sadeep.itt.retail.core.constants.UserType;
+import lk.sadeep.itt.retail.custom.nodemanager.ActiveNodeKeeper;
+import lk.sadeep.itt.retail.custom.nodemanager.NodeInfo;
+import lk.sadeep.itt.retail.synchronization.DistributedLock;
+import lk.sadeep.itt.retail.synchronization.LockName;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 import java.util.Optional;
 
 public class MainMenu {
@@ -34,7 +43,7 @@ public class MainMenu {
             switch (selectedOption)
             {
                 case 1 : registerAdmin(); break;
-                case 2 : registerCustomer(); break;
+                case 2 : registerCustomer(null); break;
                 case 3 : login(); break;
                 case 4 : exit(); break;
                 default: System.out.println("Invalid option ! Please try again.");
@@ -54,16 +63,67 @@ public class MainMenu {
         System.out.println("\nAdmin registered successfully !\n");
     }
 
-    public void registerCustomer() throws IOException {
+    public void registerCustomer(User user) throws IOException {
 
-        User newUser = createUser(UserType.CUSTOMER);
+        User newUser;
+        boolean syncToOthers = false;
+
+        if(user != null) { /** is request come from another service */
+            newUser = new User(user.getUsername(), user.getPassword());
+        } else {
+            newUser = createUser(UserType.CUSTOMER);
+            syncToOthers = true;
+        }
+
+        /** acquire distributed lock on customer data storage */
+        DistributedLock lock = null;
+        if(syncToOthers) {
+            lock = DistributedLockHandler.acquireLock(LockName.CUSTOMER_DATA_LOCK);
+        }
 
         Customer newCustomer = new Customer();
         newCustomer.setUser(newUser);
 
-        Customer.addNewCustomer(newCustomer);
+        Optional<Customer> customer = Customer.addNewCustomer(newCustomer);
 
-        System.out.println("\nCustomer registered successfully !\n");
+        // TODO : call GRPC call to other nodes to sync data
+        if(syncToOthers) {
+            try {
+                List<NodeInfo> allNodeLocations = ActiveNodeKeeper.getAllNodeLocations();
+
+                for(NodeInfo nodeInfo : allNodeLocations) {
+                    final int port = ProjectEntryPointHandler.getPort();
+
+                    NameServiceClient.ServiceDetails serviceDetails = new NameServiceClient(Constants.NAME_SERVICE_ADDRESS)
+                            .findService(Constants.SERVICE_NAME_BASE + nodeInfo.getPort());
+
+                    if(port != Integer.valueOf(nodeInfo.getPort())) { /** sending syncing GRPC call for all other active nodes */
+                        System.out.println("\nSending customer sync request to : " + nodeInfo.getIp() + ":" + nodeInfo.getPort());
+                        new OnlineRentalServiceClient(nodeInfo.getIp(), Integer.valueOf(nodeInfo.getPort()))
+                                .registerUserSync(newUser);
+                    }
+                }
+
+            } catch (IOException e) {
+                System.out.println("\nError while invoking GRPC call :" + e.getMessage());
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                System.out.println("\nError while invoking GRPC call :" + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        /** release distributed lock on customer data storage */
+        if(syncToOthers) {
+            DistributedLockHandler.releaseLock(lock);
+        }
+
+        if(syncToOthers) {
+            System.out.println("\nCustomer registered successfully !");
+            System.out.println("Your customer Id will is : " + customer.get().getId() + "\n");
+        } else {
+            System.out.println("\nNew customer registered to the system.");
+        }
     }
 
     public User createUser(UserType userType) throws IOException {
@@ -73,11 +133,11 @@ public class MainMenu {
         System.out.println("\nWELCOME TO "+userType+" REGISTRATION PAGE\n");
         System.out.println("-------------------------------------\n");
 
-        if(userType == UserType.ADMIN) {
+        /*if(userType == UserType.ADMIN) {
             System.out.println("Admin Id = " + Admin.getNextAvailableId());
         } else if (userType == UserType.CUSTOMER) {
             System.out.println("Customer Id = " + Customer.getNextAvailableId());
-        }
+        }*/
 
         System.out.print("\nEnter username = ");
         username = br.readLine();

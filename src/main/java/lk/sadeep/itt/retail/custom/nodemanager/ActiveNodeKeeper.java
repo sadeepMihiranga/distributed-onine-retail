@@ -1,6 +1,7 @@
 package lk.sadeep.itt.retail.custom.nodemanager;
 
 import com.google.gson.Gson;
+import lk.sadeep.itt.retail.Constants;
 import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
 
 import java.io.BufferedReader;
@@ -46,9 +47,9 @@ public class ActiveNodeKeeper {
         new Timer().schedule(task, delay, statusCheckFreq);
     }
 
-    private static List<NodeInfo> getAllNodeLocations() throws IOException {
+    public static List<NodeInfo> getAllNodeLocations() throws IOException {
 
-        Process proc =  Runtime.getRuntime().exec("etcdctl get --prefix OnlineRetailService_");
+        Process proc =  Runtime.getRuntime().exec("etcdctl get --prefix " + Constants.SERVICE_NAME_BASE);
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
         List<NodeInfo> allNodeInfo = new ArrayList<>();
@@ -61,6 +62,9 @@ public class ActiveNodeKeeper {
                 allNodeInfo.add(gson.fromJson(s, NodeInfo.class));
             }
         }
+
+        gson = null;
+        stdInput = null;
 
         return allNodeInfo;
     }

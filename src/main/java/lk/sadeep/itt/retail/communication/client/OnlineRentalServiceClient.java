@@ -6,6 +6,7 @@ import io.grpc.ManagedChannelBuilder;
 import lk.sadeep.iit.retail.communication.grpc.generated.*;
 import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
 import lk.sadeep.itt.retail.core.Item;
+import lk.sadeep.itt.retail.core.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,8 @@ public class OnlineRentalServiceClient {
         channel.shutdown();
     }
 
-    public void updateInventoryCheckout(Long customerId, List<UpdateStockCheckoutRequestDTO> updateStockCheckoutRequestDTOList) {
+    public void updateInventoryCheckoutSync(Long customerId,
+                                            List<UpdateStockCheckoutRequestDTO> updateStockCheckoutRequestDTOList) {
 
         initializeConnection();
 
@@ -64,10 +66,10 @@ public class OnlineRentalServiceClient {
 
         closeConnection();
 
-        System.out.println("\nIs item stock Updated : " + updateStockCheckoutResponse.getIsUpdated());
+        System.out.println("\nIs item stock GRPC Updated : " + updateStockCheckoutResponse.getIsUpdated());
     }
 
-    public void addNewItem(Item item) {
+    public void addNewItemSync(Item item) {
 
         initializeConnection();
 
@@ -88,7 +90,26 @@ public class OnlineRentalServiceClient {
 
         closeConnection();
 
-        System.out.println("\nNew item add response  : " + addNewItemResponse.getResponseMessage());
+        System.out.println("\nNew item add GRPC response  : " + addNewItemResponse.getResponseMessage());
+    }
+
+    public void registerUserSync(User user) {
+
+        initializeConnection();
+
+        RegisterUserRequest registerUserRequest = RegisterUserRequest.newBuilder()
+                .setUsername(user.getUsername())
+                .setPassword(user.getPassword())
+                .build();
+
+        RegisterUserResponse registerUserResponse = onlineRetailServiceClientStub
+                .withDeadline(Deadline.after(5, TimeUnit.SECONDS))
+                .withWaitForReady()
+                .registerUser(registerUserRequest);
+
+        closeConnection();
+
+        System.out.println("\nRegister user GRPC response  : " + registerUserResponse.getResponseMessage());
     }
 
     public String checkNodeHealth() {

@@ -3,6 +3,8 @@ package lk.sadeep.itt.retail.communication.server;
 import io.grpc.stub.StreamObserver;
 import lk.sadeep.iit.retail.communication.grpc.generated.*;
 import lk.sadeep.itt.retail.core.Item;
+import lk.sadeep.itt.retail.core.MainMenu;
+import lk.sadeep.itt.retail.core.User;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -16,7 +18,7 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
     public void updateStockCheckout(UpdateStockCheckoutRequest request,
                                     StreamObserver<UpdateStockCheckoutResponse> responseObserver) {
 
-        System.out.println("\nItem stock update request received.");
+        System.out.println("\nItem stock update GRPC request received.");
 
         syncItemStock(request.getCustomerId(), request.getUpdateStockCheckoutItemsList());
 
@@ -51,7 +53,7 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
     @Override
     public void addNewItem(AddNewItemRequest request, StreamObserver<AddNewItemResponse> responseObserver) {
 
-        System.out.println("\nItem insert request received.");
+        System.out.println("\nItem insert GRPC request received.");
 
         Item item = new Item(request.getItemId(), request.getCode(), request.getName(), Long.valueOf(request.getCategoryId()).intValue(),
                 request.getDescription(), BigDecimal.valueOf(request.getPrice()), request.getQuantity());
@@ -64,6 +66,28 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
                 .build();
 
         responseObserver.onNext(addNewItemResponse);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void registerUser(RegisterUserRequest request, StreamObserver<RegisterUserResponse> responseObserver) {
+
+        System.out.println("\nCustomer insert GRPC request received.");
+
+        User user = new User(request.getUsername(), request.getPassword());
+        try {
+            new MainMenu().registerCustomer(user);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("\nCustomer insert synced successfully.");
+
+        RegisterUserResponse registerUserResponse = RegisterUserResponse.newBuilder()
+                .setResponseMessage("SUCCESS")
+                .build();
+
+        responseObserver.onNext(registerUserResponse);
         responseObserver.onCompleted();
     }
 
