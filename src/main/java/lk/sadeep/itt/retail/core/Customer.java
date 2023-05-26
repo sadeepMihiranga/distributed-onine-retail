@@ -192,6 +192,10 @@ public class Customer {
                 .findFirst();
     }
 
+    public static List<Customer> getCustomers() {
+        return customerList;
+    }
+
     public Long getId() {
         return id;
     }
@@ -200,7 +204,7 @@ public class Customer {
         this.id = id;
     }
 
-    private User getUser() {
+    public User getUser() {
         return user;
     }
 

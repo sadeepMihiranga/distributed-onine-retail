@@ -34,7 +34,7 @@ public class Item {
     private UserType userType;
     private Long loggedCustomerId;
 
-    private static List<Item> itemStore = new ArrayList<>();
+    public static List<Item> itemStore = new ArrayList<>();
 
     public static final String NAME_SERVICE_ADDRESS = "http://localhost:2379";
 
@@ -640,6 +640,10 @@ public class Item {
 
             return newItemId;
         }
+    }
+
+    public static List<Item> getItems() {
+        return itemStore;
     }
 
     public Long getItemId() {

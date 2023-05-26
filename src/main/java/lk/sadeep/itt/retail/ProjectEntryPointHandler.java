@@ -3,19 +3,24 @@ package lk.sadeep.itt.retail;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lk.sadeep.iit.NameServiceClient;
+import lk.sadeep.iit.retail.communication.grpc.generated.ItemRequest;
+import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
 import lk.sadeep.itt.retail.communication.server.OnlineRetailServiceImpl;
 import lk.sadeep.itt.retail.core.Item;
+import lk.sadeep.itt.retail.core.ItemCategory;
 import lk.sadeep.itt.retail.core.MainMenu;
 import lk.sadeep.itt.retail.custom.nodemanager.ActiveNodeKeeper;
 import lk.sadeep.itt.retail.synchronization.DistributedLock;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class ProjectEntryPointHandler {
 
 
     private static boolean isAnc = false;
+    private static boolean isNewlyJoinedNode = false;
     private static String host;
     private static int port;
 
@@ -47,8 +52,23 @@ public class ProjectEntryPointHandler {
         /** register node location in the name service */
         registerNameService(port, host);
 
-        /** insert some item when starting the application */
-        insertItems();
+        if(isNewlyJoinedNode) { /** newly started node needed database sync from on of the initially started node */
+
+            int startNodePort = Integer.valueOf(PropertiesLoader.loadProperties().getProperty("start-port"));
+
+            NameServiceClient.ServiceDetails serviceDetails = new NameServiceClient(Constants.NAME_SERVICE_ADDRESS)
+                    .findService(Constants.SERVICE_NAME_BASE + startNodePort);
+
+            // sync items
+            new OnlineRentalServiceClient(serviceDetails.getIPAddress(), Integer.valueOf(serviceDetails.getPort())).syncItems();
+
+            // sync customers
+            new OnlineRentalServiceClient(serviceDetails.getIPAddress(), Integer.valueOf(serviceDetails.getPort())).syncCustomers();
+
+        } else {
+            /** insert some item when starting the application */
+            insertItems();
+        }
 
         /** start the online retail application */
         try {
@@ -72,6 +92,15 @@ public class ProjectEntryPointHandler {
 
             isAnc = true;
 
+        } else if (args[0].equals("new")) {
+
+            host = args[1];
+
+            String stringPort = args[2];
+            port = Integer.valueOf(stringPort);
+
+            isNewlyJoinedNode = true;
+
         } else {
             if (args.length != 2) {
                 System.out.println("Param needs <host> <port>");
@@ -81,7 +110,6 @@ public class ProjectEntryPointHandler {
             host = args[0];
 
             String stringPort = args[1];
-
             port = Integer.valueOf(stringPort);
         }
     }

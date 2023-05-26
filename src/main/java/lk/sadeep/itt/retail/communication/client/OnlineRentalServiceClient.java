@@ -5,9 +5,13 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lk.sadeep.iit.retail.communication.grpc.generated.*;
 import lk.sadeep.itt.retail.communication.dto.UpdateStockCheckoutRequestDTO;
+import lk.sadeep.itt.retail.core.Customer;
 import lk.sadeep.itt.retail.core.Item;
+import lk.sadeep.itt.retail.core.ItemCategory;
 import lk.sadeep.itt.retail.core.User;
+import lk.sadeep.itt.retail.core.constants.UserType;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +77,7 @@ public class OnlineRentalServiceClient {
 
         initializeConnection();
 
-        AddNewItemRequest addNewItemRequest = AddNewItemRequest.newBuilder()
+        ItemRequest addNewItemRequest = ItemRequest.newBuilder()
                         .setItemId(item.getItemId())
                         .setCode(item.getItemCode())
                         .setCategoryId(item.getItemCategory().getCategoryId())
@@ -97,7 +101,7 @@ public class OnlineRentalServiceClient {
 
         initializeConnection();
 
-        RegisterUserRequest registerUserRequest = RegisterUserRequest.newBuilder()
+        UserRequest registerUserRequest = UserRequest.newBuilder()
                 .setUsername(user.getUsername())
                 .setPassword(user.getPassword())
                 .build();
@@ -110,6 +114,64 @@ public class OnlineRentalServiceClient {
         closeConnection();
 
         System.out.println("\nRegister user GRPC response  : " + registerUserResponse.getResponseMessage());
+    }
+
+    public void syncItems() {
+
+        initializeConnection();
+
+        SyncItemsRequest request = SyncItemsRequest.newBuilder().build();
+
+        SyncItemsResponse response = onlineRetailServiceClientStub
+                .withDeadline(Deadline.after(1, TimeUnit.SECONDS))
+                .withWaitForReady()
+                .syncItems(request);
+
+        closeConnection();
+
+        System.out.println("\nItems sync success with  : " + response.getItemsList().size());
+
+        for(ItemRequest itemRequest : response.getItemsList()) {
+
+            Item item = new Item();
+            item.setItemId(itemRequest.getItemId());
+            item.setItemCode(itemRequest.getCode());
+            item.setItemName(itemRequest.getName());
+            item.setItemDescription(itemRequest.getDescription());
+            item.setItemPrice(BigDecimal.valueOf(itemRequest.getPrice()));
+            item.setQuantity(itemRequest.getQuantity());
+            item.setItemCategory(ItemCategory.findById(Long.valueOf(itemRequest.getCategoryId()).intValue()).get());
+
+            Item.getItems().add(item);
+        }
+    }
+
+    public void syncCustomers() {
+
+        initializeConnection();
+
+        SyncCustomersRequest syncCustomersRequest = SyncCustomersRequest.newBuilder().build();
+
+        SyncCustomersResponse response = onlineRetailServiceClientStub
+                .withDeadline(Deadline.after(1, TimeUnit.SECONDS))
+                .withWaitForReady()
+                .syncCustomers(syncCustomersRequest);
+
+        closeConnection();
+
+        System.out.println("\nCustomers sync success with  : " + response.getCustomersList().size());
+
+        for(CustomerRPCO customerRPCO : response.getCustomersList()) {
+
+            User user = new User(customerRPCO.getUser().getUserId(), customerRPCO.getUser().getUsername(),
+                    customerRPCO.getUser().getPassword(), UserType.CUSTOMER);
+            User.getUsers().add(user);
+
+            Customer customer = new Customer();
+            customer.setId(customerRPCO.getCustomerId());
+            customer.setUser(user);
+            Customer.getCustomers().add(customer);
+        }
     }
 
     public String checkNodeHealth() {

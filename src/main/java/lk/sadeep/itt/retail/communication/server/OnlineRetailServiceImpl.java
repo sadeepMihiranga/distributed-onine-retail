@@ -2,12 +2,14 @@ package lk.sadeep.itt.retail.communication.server;
 
 import io.grpc.stub.StreamObserver;
 import lk.sadeep.iit.retail.communication.grpc.generated.*;
+import lk.sadeep.itt.retail.core.Customer;
 import lk.sadeep.itt.retail.core.Item;
 import lk.sadeep.itt.retail.core.MainMenu;
 import lk.sadeep.itt.retail.core.User;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +53,7 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
     }
 
     @Override
-    public void addNewItem(AddNewItemRequest request, StreamObserver<AddNewItemResponse> responseObserver) {
+    public void addNewItem(ItemRequest request, StreamObserver<AddNewItemResponse> responseObserver) {
 
         System.out.println("\nItem insert GRPC request received.");
 
@@ -70,7 +72,7 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
     }
 
     @Override
-    public void registerUser(RegisterUserRequest request, StreamObserver<RegisterUserResponse> responseObserver) {
+    public void registerUser(UserRequest request, StreamObserver<RegisterUserResponse> responseObserver) {
 
         System.out.println("\nCustomer insert GRPC request received.");
 
@@ -96,6 +98,71 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
 
         CheckNodeHealthResponse response = CheckNodeHealthResponse.newBuilder()
                 .setResponseMessage("ACTIVE")
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void syncItems(SyncItemsRequest request, StreamObserver<SyncItemsResponse> responseObserver) {
+
+        System.out.println("\nSync items request received.");
+
+        List<ItemRequest> itemRequestList = new ArrayList<>();
+
+        for(Item item : Item.getItems()) {
+
+            ItemRequest itemRequest = ItemRequest.newBuilder()
+                    .setItemId(item.getItemId())
+                    .setCode(item.getItemCode())
+                    .setName(item.getItemName())
+                    .setDescription(item.getItemDescription())
+                    .setCategoryId(item.getItemCategory().getCategoryId())
+                    .setPrice(item.getItemPrice().doubleValue())
+                    .setQuantity(item.getQuantity())
+                    .build();
+
+            itemRequestList.add(itemRequest);
+        }
+
+        System.out.println("\nSync items request will response with " + itemRequestList.size() + " items.");
+
+        SyncItemsResponse response = SyncItemsResponse.newBuilder()
+                .addAllItems(itemRequestList)
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void syncCustomers(SyncCustomersRequest request, StreamObserver<SyncCustomersResponse> responseObserver) {
+
+        System.out.println("\nSync customers request received.");
+
+        List<CustomerRPCO> customerList = new ArrayList<>();
+
+        for(Customer customer : Customer.getCustomers()) {
+
+            UserRequest user = UserRequest.newBuilder()
+                    .setUserId(customer.getUser().getUserId())
+                    .setUsername(customer.getUser().getUsername())
+                    .setPassword(customer.getUser().getPassword())
+                    .build();
+
+            CustomerRPCO customerRPCO = CustomerRPCO.newBuilder()
+                    .setCustomerId(customer.getId())
+                    .setUser(user)
+                    .build();
+
+            customerList.add(customerRPCO);
+        }
+
+        System.out.println("\nSync customers request will response with " + customerList.size() + " customers.");
+
+        SyncCustomersResponse response = SyncCustomersResponse.newBuilder()
+                .addAllCustomers(customerList)
                 .build();
 
         responseObserver.onNext(response);

@@ -26,7 +26,7 @@ message CheckNodeHealthResponse {
   string responseMessage = 1;
 }
 
-message AddNewItemRequest {
+message ItemRequest {
   int64 itemId = 1;
   string code = 2;
   string name = 3;
@@ -40,18 +40,39 @@ message AddNewItemResponse {
   string responseMessage = 1;
 }
 
-message RegisterUserRequest {
-  string username = 1;
-  string password = 2;
+message UserRequest {
+  int64 userId = 1;
+  string username = 2;
+  string password = 3;
 }
 
 message RegisterUserResponse {
   string responseMessage = 1;
 }
 
+message SyncItemsRequest {}
+
+message SyncItemsResponse {
+  repeated ItemRequest items = 1;
+}
+
+message SyncCustomersRequest {}
+
+message CustomerRPCO {
+  int64 customerId = 1;
+  UserRequest user = 2;
+}
+
+message SyncCustomersResponse {
+  repeated CustomerRPCO customers = 1;
+}
+
 service OnlineRetailService {
   rpc updateStockCheckout(UpdateStockCheckoutRequest) returns (UpdateStockCheckoutResponse);
   rpc checkNodeHealth(CheckNodeHealthRequest) returns (CheckNodeHealthResponse);
-  rpc addNewItem(AddNewItemRequest) returns (AddNewItemResponse);
-  rpc registerUser(RegisterUserRequest) returns (RegisterUserResponse);
+  rpc addNewItem(ItemRequest) returns (AddNewItemResponse);
+  rpc registerUser(UserRequest) returns (RegisterUserResponse);
+
+  rpc syncItems(SyncItemsRequest) returns (SyncItemsResponse);
+  rpc syncCustomers(SyncCustomersRequest) returns (SyncCustomersResponse);
 }

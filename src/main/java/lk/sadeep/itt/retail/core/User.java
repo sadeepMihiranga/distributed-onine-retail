@@ -9,7 +9,6 @@ public class User {
     private Long userId;
     private String username;
     private String password;
-
     private UserType userType;
 
     public User() {
@@ -18,6 +17,13 @@ public class User {
     public User(String username, String password) {
         this.username = username;
         this.password = password;
+    }
+
+    public User(Long userId, String username, String password, UserType userType) {
+        this.userId = userId;
+        this.username = username;
+        this.password = password;
+        this.userType = userType;
     }
 
     private static List<User> userList = new ArrayList<>();
@@ -51,6 +57,10 @@ public class User {
         return userList.stream()
                 .filter(user -> user.getUsername().equals(username) && user.getPassword().equals(password))
                 .findFirst();
+    }
+
+    public static List<User> getUsers() {
+        return userList;
     }
 
     public Long getUserId() {
