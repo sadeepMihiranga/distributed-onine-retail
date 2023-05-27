@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This class handles all GRPC call invocations as a client
+ * */
 public class OnlineRentalServiceClient {
 
     private String host = null;
@@ -28,6 +31,9 @@ public class OnlineRentalServiceClient {
         this.port = port;
     }
 
+    /**
+     * Create a GRPC connection for the particular service of node
+     * */
     private void initializeConnection () {
         System.out.println("\nInitializing Connecting to server at " + host + ":" + port);
         channel = ManagedChannelBuilder.forAddress(host, port)
@@ -36,10 +42,16 @@ public class OnlineRentalServiceClient {
         onlineRetailServiceClientStub = OnlineRetailServiceGrpc.newBlockingStub(channel);
     }
 
+    /**
+     * Close the currently open GRPC connection
+     * */
     private void closeConnection() {
         channel.shutdown();
     }
 
+    /**
+     * Update item inventory of all other running nodes when a customer checkout
+     * */
     public void updateInventoryCheckoutSync(Long customerId,
                                             List<UpdateStockCheckoutRequestDTO> updateStockCheckoutRequestDTOList) {
 
@@ -73,6 +85,9 @@ public class OnlineRentalServiceClient {
         System.out.println("\nIs item stock GRPC Updated : " + updateStockCheckoutResponse.getIsUpdated());
     }
 
+    /**
+     * Update item inventory of all other running nodes when an admin add new item
+     * */
     public void addNewItemSync(Item item) {
 
         initializeConnection();
@@ -97,6 +112,9 @@ public class OnlineRentalServiceClient {
         System.out.println("\nNew item add GRPC response  : " + addNewItemResponse.getResponseMessage());
     }
 
+    /**
+     * Update customer database of all other running nodes when a new customer registered to the system
+     * */
     public void registerUserSync(User user) {
 
         initializeConnection();
@@ -116,6 +134,10 @@ public class OnlineRentalServiceClient {
         System.out.println("\nRegister user GRPC response  : " + registerUserResponse.getResponseMessage());
     }
 
+    /**
+     * Update item inventory of the newly joined node by calling an initially started node.
+     * The node running on port that configured in "application.properties" file
+     * */
     public void syncItems() {
 
         initializeConnection();
@@ -146,6 +168,10 @@ public class OnlineRentalServiceClient {
         }
     }
 
+    /**
+     * Update customer database of the newly joined node by calling an initially started node.
+     * The node running on port that configured in "application.properties" file
+     * */
     public void syncCustomers() {
 
         initializeConnection();

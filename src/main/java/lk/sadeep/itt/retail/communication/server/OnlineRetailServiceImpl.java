@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class handles all GRPC calls as a server and act as requested by the client
+ * */
 public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetailServiceImplBase {
 
     @Override
@@ -94,17 +97,6 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
     }
 
     @Override
-    public void checkNodeHealth(CheckNodeHealthRequest request, StreamObserver<CheckNodeHealthResponse> responseObserver) {
-
-        CheckNodeHealthResponse response = CheckNodeHealthResponse.newBuilder()
-                .setResponseMessage("ACTIVE")
-                .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
-
-    @Override
     public void syncItems(SyncItemsRequest request, StreamObserver<SyncItemsResponse> responseObserver) {
 
         System.out.println("\nSync items request received.");
@@ -163,6 +155,17 @@ public class OnlineRetailServiceImpl extends OnlineRetailServiceGrpc.OnlineRetai
 
         SyncCustomersResponse response = SyncCustomersResponse.newBuilder()
                 .addAllCustomers(customerList)
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void checkNodeHealth(CheckNodeHealthRequest request, StreamObserver<CheckNodeHealthResponse> responseObserver) {
+
+        CheckNodeHealthResponse response = CheckNodeHealthResponse.newBuilder()
+                .setResponseMessage("ACTIVE")
                 .build();
 
         responseObserver.onNext(response);

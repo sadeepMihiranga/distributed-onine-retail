@@ -68,8 +68,9 @@ message SyncCustomersResponse {
 }
 
 service OnlineRetailService {
-  rpc updateStockCheckout(UpdateStockCheckoutRequest) returns (UpdateStockCheckoutResponse);
   rpc checkNodeHealth(CheckNodeHealthRequest) returns (CheckNodeHealthResponse);
+
+  rpc updateStockCheckout(UpdateStockCheckoutRequest) returns (UpdateStockCheckoutResponse);
   rpc addNewItem(ItemRequest) returns (AddNewItemResponse);
   rpc registerUser(UserRequest) returns (RegisterUserResponse);
 

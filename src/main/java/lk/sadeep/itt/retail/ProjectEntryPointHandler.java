@@ -3,18 +3,15 @@ package lk.sadeep.itt.retail;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lk.sadeep.iit.NameServiceClient;
-import lk.sadeep.iit.retail.communication.grpc.generated.ItemRequest;
 import lk.sadeep.itt.retail.communication.client.OnlineRentalServiceClient;
 import lk.sadeep.itt.retail.communication.server.OnlineRetailServiceImpl;
 import lk.sadeep.itt.retail.core.Item;
-import lk.sadeep.itt.retail.core.ItemCategory;
 import lk.sadeep.itt.retail.core.MainMenu;
 import lk.sadeep.itt.retail.custom.nodemanager.ActiveNodeKeeper;
 import lk.sadeep.itt.retail.synchronization.DistributedLock;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.List;
 
 public class ProjectEntryPointHandler {
 
@@ -59,11 +56,16 @@ public class ProjectEntryPointHandler {
             NameServiceClient.ServiceDetails serviceDetails = new NameServiceClient(Constants.NAME_SERVICE_ADDRESS)
                     .findService(Constants.SERVICE_NAME_BASE + startNodePort);
 
-            // sync items
-            new OnlineRentalServiceClient(serviceDetails.getIPAddress(), Integer.valueOf(serviceDetails.getPort())).syncItems();
+            OnlineRentalServiceClient onlineRentalServiceClient = new OnlineRentalServiceClient(
+                    serviceDetails.getIPAddress(), Integer.valueOf(serviceDetails.getPort()));
 
-            // sync customers
-            new OnlineRentalServiceClient(serviceDetails.getIPAddress(), Integer.valueOf(serviceDetails.getPort())).syncCustomers();
+            /** sync items */
+            onlineRentalServiceClient.syncItems();
+
+            /** sync customers */
+            onlineRentalServiceClient.syncCustomers();
+
+            onlineRentalServiceClient = null;
 
         } else {
             /** insert some item when starting the application */

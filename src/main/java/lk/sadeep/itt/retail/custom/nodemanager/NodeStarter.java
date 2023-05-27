@@ -5,7 +5,6 @@ import java.io.Console;
 import java.io.IOException;
 
 public class NodeStarter {
-
     public static void startActiveNodeKeeper() throws IOException, InterruptedException {
 
         final String jarLocation = "C:\\Users\\sadde\\IdeaProjects\\distributed-onine-retail\\target";
@@ -14,7 +13,7 @@ public class NodeStarter {
         runCmd(jarLocation, jarRunCmd);
     }
 
-    public static void runCmd(String jarLocation, String jarRunCmd) throws IOException, InterruptedException {
+    public static void runCmd(String jarLocation, String jarRunCmd) throws IOException {
         Console console = System.console();
         if(console == null && !GraphicsEnvironment.isHeadless()) {
 

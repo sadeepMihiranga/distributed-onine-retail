@@ -97,9 +97,9 @@ public class MainMenu {
                     NameServiceClient.ServiceDetails serviceDetails = new NameServiceClient(Constants.NAME_SERVICE_ADDRESS)
                             .findService(Constants.SERVICE_NAME_BASE + nodeInfo.getPort());
 
-                    if(port != Integer.valueOf(nodeInfo.getPort())) { /** sending syncing GRPC call for all other active nodes */
+                    if(port != Integer.valueOf(serviceDetails.getPort())) { /** sending syncing GRPC call for all other active nodes */
                         System.out.println("\nSending customer sync request to : " + nodeInfo.getIp() + ":" + nodeInfo.getPort());
-                        new OnlineRentalServiceClient(nodeInfo.getIp(), Integer.valueOf(nodeInfo.getPort()))
+                        new OnlineRentalServiceClient(serviceDetails.getIPAddress(), Integer.valueOf(serviceDetails.getPort()))
                                 .registerUserSync(newUser);
                     }
                 }
